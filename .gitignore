@@ -1,0 +1,5 @@
+target/
+tests/
+out.asm
+out.o
+out
