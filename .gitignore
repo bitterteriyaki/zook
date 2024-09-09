@@ -1,5 +1,6 @@
 target/
 tests/
+docs/
 out.asm
 out.o
 out
