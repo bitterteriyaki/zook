@@ -1,16 +1,14 @@
 use std::{iter::Peekable, slice::Iter};
-
 use crate::tokens::{Token, TokenType};
 
 pub struct NodeExpr {
-    pub integer: Token
+    pub integer: Token,
 }
 
 pub struct NodeExit {
     pub expr: NodeExpr,
 }
 
-#[derive(Clone)]
 pub struct Parser {
     tokens: Vec<Token>,
 }
@@ -20,54 +18,34 @@ impl Parser {
         Parser { tokens }
     }
 
-    fn parse_expr(self, iter: &mut Peekable<Iter<'_, Token>>) -> NodeExpr {
-        if let None = iter.peek() {
-            panic!("Unexpected end of file");
-        }
-
-        let token = iter.next().unwrap();
-
-        match token.kind {
-            TokenType::Integer => (),
-            _ => panic!("Unexpected token: {:?}", token),
-            
-        }
-
-        NodeExpr { integer: token.clone() }
-    }
-
-    pub fn parse(&self) -> NodeExit {
+    pub fn get_root(self) -> NodeExit {
         let mut iter = self.tokens.iter().peekable();
 
         while let Some(token) = iter.next() {
             match token.kind {
                 TokenType::Exit => {
-                    let expr = self.clone().parse_expr(&mut iter);
-
-                    if let None = iter.peek() {
-                        panic!("Unexpected end of file");
-                    }
-
-                    let semi = iter.next().unwrap();
+                    let expr = Parser::parse_expr(&mut iter);
+                    let semi = iter.next()
+                        .expect("Error: Unexpected end of file");
 
                     match semi.kind {
-                        TokenType::Semicolon => (),
-                        _ => panic!("Unexpected token: {:?}", semi),
+                        TokenType::Semicolon => return NodeExit { expr },
+                        _ => panic!("Error: Unexpected token: {:?}", semi.value),
                     }
-
-                    return NodeExit { expr };
                 },
-                _ => panic!("Unexpected token: {:?}", token),
+                _ => panic!("Error: Unexpected token: {:?}", token.value),
             }
         }
 
-        NodeExit {
-            expr: NodeExpr {
-                integer: Token {
-                    kind: crate::tokens::TokenType::Integer,
-                    value: Some("0".to_string()),
-                },
-            },
+        panic!("Error: Unexpected end of file");
+    }
+
+    fn parse_expr(iter: &mut Peekable<Iter<'_, Token>>) -> NodeExpr {
+        let token = iter.next().expect("Error: Unexpected end of file");
+
+        match token.kind {
+            TokenType::Integer => NodeExpr { integer: token.clone() },
+            _ => panic!("Error: Unexpected token: {:?}", token.value),
         }
     }
 }

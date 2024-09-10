@@ -1,4 +1,3 @@
-#[derive(Debug)]
 #[derive(Clone)]
 pub enum TokenType {
     Exit,
@@ -6,76 +5,59 @@ pub enum TokenType {
     Semicolon,
 }
 
-#[derive(Debug)]
 #[derive(Clone)]
 pub struct Token {
     pub kind: TokenType,
     pub value: Option<String>,
 }
 
-pub struct Tokenizer {
-    content: String,
-}
+pub fn tokenize(content: &str) -> Vec<Token> {
+    let mut tokens: Vec<Token> = Vec::new();
+    let mut iter = content.chars().peekable();
 
-impl Tokenizer {
-    pub fn new(content: &str) -> Self {
-        Tokenizer { content: content.to_string() }
-    }
+    while let Some(c) = iter.next() {
+        match c {
+            p if p.is_alphabetic() => {
+                let mut value = String::new();
+                value.push(p);
 
-    pub fn tokenize(&self) -> Vec<Token> {
-        let mut tokens: Vec<Token> = Vec::new();
-        let mut iter = self.content.chars().peekable();
-    
-        while let Some(c) = iter.next() {
-            match c {
-                t if t.is_alphabetic() => {
-                    let mut value = String::new();
-                    value.push(t);
-    
-                    while let Some(r) = iter.peek() {
-                        if !r.is_alphabetic() {
-                            break;
-                        }
-    
-                        value.push(r.clone());
-                        iter.next();
+                while let Some(q) = iter.peek() {
+                    if !q.is_alphabetic() {
+                        break;
                     }
-    
-                    match value.as_str() {
-                        "exit" => tokens.push(Token {
-                            kind: TokenType::Exit,
-                            value: None,
-                        }),
-                        _ => panic!("Unexpected keyword: {}", value),
+
+                    value.push(q.clone());
+                    iter.next();
+                }
+
+                match value.as_str() {
+                    "exit" => tokens.push(Token { kind: TokenType::Exit, value: None }),
+                    _ => panic!("Error: Unexpected keyword: {}", value),
+                }
+            },
+            p if p.is_numeric() => {
+                let mut value = String::new();
+                value.push(p);
+
+                while let Some(q) = iter.peek() {
+                    if !q.is_numeric() {
+                        break;
                     }
-                },
-                t if t.is_numeric() => {
-                    let mut value = String::new();
-                    value.push(t);
-    
-                    while let Some(r) = iter.peek() {
-                        if !r.is_numeric() {
-                            break;
-                        }
-    
-                        value.push(r.clone());
-                        iter.next();
-                    }
-    
-                    tokens.push(Token {
-                        kind: TokenType::Integer,
-                        value: Some(value),
-                    });
-                },
-                ';' => tokens.push(Token {
-                    kind: TokenType::Semicolon,
-                    value: None,
-                }),
-                t if t.is_whitespace() => continue,
-                _ => panic!("Unexpected character: {}", c),
-            }
+
+                    value.push(q.clone());
+                    iter.next();
+                }
+
+                tokens.push(Token {
+                    kind: TokenType::Integer,
+                    value: Some(value),
+                });
+            },
+            p if p.is_whitespace() => continue,
+            ';' => tokens.push(Token { kind: TokenType::Semicolon, value: None }),
+            _ => panic!("Error: Unexpected character: {}", c),
         }
-    
-        tokens
     }
+
+    tokens
 }
